@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Home</title>
+
+    {% load static %}
+    <link type="text/css" rel="stylesheet" href="{% static 'css/home.css' %}" />
+
+    <link
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+      integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T"
+      crossorigin="anonymous"
+    />
+  </head>
+  <body>
+    <div class="container">
+      <img
+        src="https://aviata.kz/static/images/new/aviata-header-logo.png"
+        alt=""
+      />
+
+      <br />
+      <br />
+
+      <form action="/test" method="GET">
+        <div class="row">
+          <div class="col">
+            <label for="flyFrom">Fly from:</label>
+            <select id="flyFrom" class="form-control" name="flyFrom">
+              <option selected>Choose...</option>
+            </select>
+          </div>
+          <div class="col">
+            <label for="flyTo">Fly to:</label>
+            <select id="flyTo" class="form-control" name="flyTo">
+              <option selected>Choose...</option>
+            </select>
+          </div>
+        </div>
+        <hr />
+        <button
+          type="button"
+          id="submit"
+          class="btn btn-primary float-right"
+          onclick="getCheapTicket()"
+        >
+          Search
+        </button>
+      </form>
+    </div>
+
+    <br />
+    <br />
+
+    <div class="container">
+      <table id="linesTable" class="table">
+        <thead class="thead-dark">
+          <tr>
+            <th scope="col">#</th>
+            <th scope="col">Fly from</th>
+            <th scope="col">Fly to</th>
+            <th scope="col">Duration</th>
+            <th scope="col">Distance</th>
+            <th scope="col">Price</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+
+      <span id="notification"
+        >This is cheapest ticket in the future 30 days.
+        <button onclick="getTickets()">See all tickets</button></span
+      >
+    </div>
+
+    <script
+      src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+      integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
+      integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+      integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
+      crossorigin="anonymous"
+    ></script>
+
+    <script type="text/javascript">
+      const flyFromCities = document.getElementById("flyFrom");
+      const flyToCities = document.getElementById("flyTo");
+      const submit = document.getElementById("submit");
+      const table = document.getElementById("linesTable");
+      const notification = document.getElementById("notification");
+
+      table.style.visibility = "hidden";
+      notification.style.display = "none";
+      submit.style.display = "none";
+
+      flyFromCities.addEventListener("change", function (e) {
+        options = flyFromCities.options;
+        if (options[options.selectedIndex].innerText != "Choose...") {
+          flyToList(options[options.selectedIndex].value);
+        } else {
+          flyToCities.innerHTML = "<option selected>Choose...</option>";
+          submit.style.display = "none";
+        }
+      });
+
+      const getResponse = (url) => {
+        return fetch(url).then((resp) => {
+          return resp.json();
+        });
+      };
+
+      const flyToList = (id) => {
+        let select = flyToCities;
+        let url = `{% url 'fly_to_list' -1%}`.replace("-1", id);
+
+        select.innerHTML = "";
+
+        getResponse(url).then((data) => {
+          let list = data;
+
+          for (let i in list) {
+            select.innerHTML += `<option id='${list[i].id}' value='${list[i].id}' >${list[i].city}</option>`;
+          }
+        });
+
+        submit.style.display = "block";
+      };
+
+      const flyFromList = () => {
+        let select = flyFromCities;
+        let url = `{% url 'fly_from_list' %}`;
+
+        getResponse(url).then((data) => {
+          let list = data;
+
+          for (let i in list) {
+            select.innerHTML += `<option id='${list[i].id}' value='${list[i].id}' >${list[i].city}</option>`;
+          }
+        });
+      };
+
+      flyFromList();
+    </script>
+
+    <script>
+      const getValueOfSelect = (select) => {
+        options = select.options;
+        return options[options.selectedIndex].value;
+      };
+
+      const getCheapTicket = () => {
+        table.style.visibility = "visible";
+        let tbody = table.getElementsByTagName("tbody")[0];
+        let url = `{% url 'get_cheap_line' -1 -2 %}`
+          .replace("-1", getValueOfSelect(flyFromCities))
+          .replace("-2", getValueOfSelect(flyToCities));
+
+        getResponse(url).then((data) => {
+          tbody.innerHTML = "";
+
+          tbody.innerHTML += ` <tr>
+            <th scope="row">1</th>
+            <td>${data.cityFrom}</td>
+            <td>${data.cityTo}</td>
+            <td>${data.fly_duration}</td>
+            <td>${data.distance} km</td>
+            <td>${data.price} 000 KZT</td>
+          </tr>`;
+
+          notification.style.display = "block";
+        });
+      };
+
+      const getTickets = () => {
+        let tbody = table.getElementsByTagName("tbody")[0];
+        let url = `{% url 'get_lines' -1 -2 %}`
+          .replace("-1", getValueOfSelect(flyFromCities))
+          .replace("-2", getValueOfSelect(flyToCities));
+
+        getResponse(url).then((data) => {
+          let list = data;
+          tbody.innerHTML = "";
+          let i = 1;
+          for (let line of list) {
+            console.log(line);
+            tbody.innerHTML += ` <tr>
+            <th scope="row">${i}</th>
+            <td>${line.cityFrom}</td>
+            <td>${line.cityTo}</td>
+            <td>${line.fly_duration}</td>
+            <td>${line.distance} km</td>
+            <td>${line.price} 000 KZT</td>
+          </tr>`;
+
+            i++;
+          }
+
+          notification.style.display = "none";
+        });
+      };
+    </script>
+  </body>
+</html>
