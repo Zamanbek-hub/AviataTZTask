@@ -142,18 +142,15 @@ STATIC_URL = '/static/'
 from celery.schedules import crontab
 
 CELERY_BROKER_URL = 'redis://localhost:6379'
-
-
-# we get dates on json
-accept_content = ['json']
+accept_content = ['json']       # we get dates on json
 task_serializer = 'json'
 CELERY_BEAT_SCHEDULE = {
     'feel_cache_about_lines':{
         'task':'app.tasks.feel_cache_about_lines',
-        'schedule':crontab(minute='*/10'),
+        'schedule':crontab(minute=0, hour=0),       # every midnight
     },
-    'feel_cache_about_lines':{
+    'check_flight':{
         'task':'app.tasks.check_flight',
-        'schedule':crontab(minute="*/2"),
+        'schedule':crontab(hour="*/1"),             # every hour
     }
 }
