@@ -87,6 +87,17 @@ DATABASES = {
     }
 }
 
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": 'redis://127.0.0.1:6379/1',
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        },
+        "KEY_PREFIX": "example"
+    }
+}
+
 
 
 # Password validation
@@ -128,6 +139,8 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 
+from celery.schedules import crontab
+
 CELERY_BROKER_URL = 'redis://localhost:6379'
 
 
@@ -135,12 +148,12 @@ CELERY_BROKER_URL = 'redis://localhost:6379'
 accept_content = ['json']
 task_serializer = 'json'
 CELERY_BEAT_SCHEDULE = {
-    'second_task':{
-        'task':'app.tasks.my_second_task',
-        'schedule':15.0,
+    'feel_cache_about_lines':{
+        'task':'app.tasks.feel_cache_about_lines',
+        'schedule':crontab(minute='*/10'),
     },
-    'third_task':{
-        'task':'app.tasks.my_third_task',
-        'schedule':30.0,
+    'feel_cache_about_lines':{
+        'task':'app.tasks.check_flight',
+        'schedule':crontab(minute="*/2"),
     }
 }
